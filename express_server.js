@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
-app.set("view engine", "ejs") //tells Express app to use EJS as its templating engine
+app.set("view engine", "ejs"); //tells Express app to use EJS as its templating engine
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -14,11 +14,16 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase); 
+  res.json(urlDatabase);
 });
 
 app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n")
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
+app.get("/urls", (req, res) => {
+  const templateVars = { urls: urlDatabase }; //need to send these in an object
+  res.render("urls_index", templateVars); //looks for urls_index.ejs file and gives it access to templateVars
 });
 
 app.listen(PORT, () => {
