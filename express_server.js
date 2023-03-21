@@ -11,6 +11,9 @@ const urlDatabase = {
 
 app.use(express.urlencoded({ extended: true })); //convert body from buffer to string
 
+const generateRandonString = function() {
+  return Math.random().toString(36).slice(2,8);
+}
 
 //HOMEPAGE
 app.get("/", (req, res) => {
@@ -35,9 +38,8 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  const newShortURL = Math.random().toString(36).slice(2,8);  //create random ID
+  const newShortURL = generateRandonString();  //create random ID
   urlDatabase[newShortURL] = req.body.longURL; //store data in urlDatabase object
-  //HELP:
   //redirect to coressponding url page
   res.redirect(`/urls/:${newShortURL}`)
   });
