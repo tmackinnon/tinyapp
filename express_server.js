@@ -47,11 +47,10 @@ app.get("/urls/new", (req, res) => {
 
 //SPECIFIC URL PAGE
 app.get("/urls/:id", (req, res) => {
-  const shortURL = req.params.id;
-  const templateVars = { id: shortURL, longURL: urlDatabase[shortURL] };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   
-  if (!urlDatabase[shortURL]) { //if the short url is in our data
-    res.status(404).render("urls_error", templateVars)
+  if (!urlDatabase[req.params.id]) { //if the short url is not in our data
+    res.status(404).render("urls_error")
     res.end();
   } else {
     res.render("urls_show", templateVars);
@@ -61,7 +60,13 @@ app.get("/urls/:id", (req, res) => {
 //REDIRECT SHORT URLS to LONG URL
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
-  res.redirect(302, longURL);
+  
+  if (!urlDatabase[req.params.id]) { //if the url is not in our data
+    res.status(404).render("urls_error")
+    res.end();
+  } else {
+    res.redirect(302, longURL);
+  }
 });
 
 
