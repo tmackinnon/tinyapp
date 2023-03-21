@@ -3,17 +3,19 @@ const app = express();
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs"); //tells Express app to use EJS as its templating engine
+app.use(express.urlencoded({ extended: true })); //convert body from buffer to string
 
+//obj to hold urls
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
-app.use(express.urlencoded({ extended: true })); //convert body from buffer to string
-
+//to create short urls
 const generateRandonString = function() {
-  return Math.random().toString(36).slice(2,8);
-}
+  return Math.random().toString(36).slice(2, 8);
+};
+
 
 //GET SECTION
 
@@ -32,13 +34,13 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-//URLS PAGE
+//ALL URLS PAGE
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase }; //need to send these in an object
   res.render("urls_index", templateVars); //looks for urls_index.ejs file and gives it access to templateVars
 });
 
-//NEW URLS 
+//ADD NEW URL
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
@@ -46,14 +48,20 @@ app.get("/urls/new", (req, res) => {
 //SPECIFIC URL PAGE
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  const templateVars = { id: shortURL, longURL: urlDatabase[shortURL] }
-  res.render("urls_show", templateVars);
+  const templateVars = { id: shortURL, longURL: urlDatabase[shortURL] };
+  
+  if (!urlDatabase[shortURL]) { //if the short url is in our data
+    res.status(404).render("urls_error", templateVars)
+    res.end();
+  } else {
+    res.render("urls_show", templateVars);
+  }
 });
 
-//REDIRECT SHORT URLS
+//REDIRECT SHORT URLS to LONG URL
 app.get("/u/:id", (req, res) => {
-  longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(302, longURL);
 });
 
 
@@ -65,8 +73,8 @@ app.post("/urls", (req, res) => {
   const newShortURL = generateRandonString();  //create random ID
   urlDatabase[newShortURL] = req.body.longURL; //store data in urlDatabase object
   //redirect to coressponding url page
-  res.redirect(`/urls/:${newShortURL}`)
-  });
+  res.redirect(`/urls/${newShortURL}`);
+});
 
 //app listen on port
 app.listen(PORT, () => {
