@@ -57,6 +57,15 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newShortURL}`);
 });
 
+//
+//EDIT
+//
+//UPDATE LONG URL
+app.post("/urls/:id", (req, res) => {
+  urlDatabase[req.params.id] = req.body.longURL; //update long url in db
+   res.redirect(`/urls`);
+});
+
 
 //
 // DELETE
