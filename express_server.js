@@ -21,6 +21,7 @@ const generateRandonString = function() {
 
 //HOMEPAGE
 app.get("/", (req, res) => {
+  console.log("url Database:", urlDatabase); //for debugging purposes
   res.send("Hello!");
 });
 
@@ -65,7 +66,7 @@ app.get("/u/:id", (req, res) => {
     res.status(404).render("urls_error")
     res.end();
   } else {
-    res.redirect(302, longURL);
+    res.redirect(longURL);
   }
 });
 
