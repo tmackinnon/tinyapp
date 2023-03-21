@@ -17,7 +17,9 @@ const generateRandonString = function() {
 };
 
 
-//GET SECTION
+//
+//BROWSE
+//
 
 //HOMEPAGE
 app.get("/", (req, res) => {
@@ -25,7 +27,7 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-//
+// Don't know the purpose of this
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -41,12 +43,41 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars); //looks for urls_index.ejs file and gives it access to templateVars
 });
 
+
+//
+// ADD 
+//
+
 //ADD NEW URL
+app.post("/urls", (req, res) => {
+  console.log(req.body); // Log the POST request body to the console
+  const newShortURL = generateRandonString();  //create random ID
+  urlDatabase[newShortURL] = req.body.longURL; //store data in urlDatabase object
+  //redirect to coressponding url page
+  res.redirect(`/urls/${newShortURL}`);
+});
+
+
+//
+// DELETE
+//
+
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.id]; //delete url from db
+  res.redirect("/urls") //redirect to urls page
+})
+
+
+//
+// READ
+//
+
+//GO TO ADD NEW URL PAGE
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-//SPECIFIC URL PAGE
+//GO TO SPECIFIC URL PAGE
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   
@@ -71,16 +102,6 @@ app.get("/u/:id", (req, res) => {
 });
 
 
-//POST SECTION
-
-//POST ON URLS
-app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  const newShortURL = generateRandonString();  //create random ID
-  urlDatabase[newShortURL] = req.body.longURL; //store data in urlDatabase object
-  //redirect to coressponding url page
-  res.redirect(`/urls/${newShortURL}`);
-});
 
 //app listen on port
 app.listen(PORT, () => {
