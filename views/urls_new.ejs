@@ -17,15 +17,17 @@
 
     <title>New URL - TinyApp Example</title>
   </head>
-
   <body>
     <%- include('partials/_header') %>
+
     <main style="margin: 1em;">
       <h3>Create TinyURL</h3>
-      <form class="form-inline" action="/urls" method="POST">
+
+      <form method="POST" action="/urls" class="form-inline">
         <div class="form-group mb-2">
           <label for="longURL">Enter a URL:</label>
           <input
+            id="longURL"
             class="form-control"
             type="text"
             name="longURL"
@@ -35,6 +37,7 @@
           <button type="submit" class="btn btn-primary">Submit</button>
         </div>
       </form>
+
     </main>
     <!-- Bootstrap JS -->
     <script
