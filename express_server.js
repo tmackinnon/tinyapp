@@ -53,6 +53,12 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+//REDIRECT SHORT URLS
+app.get("/u/:id", (req, res) => {
+  longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
+});
+
 
 //app listen on port
 app.listen(PORT, () => {
