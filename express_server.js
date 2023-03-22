@@ -57,13 +57,20 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newShortURL}`);
 });
 
+//LOGIN WITH NEW USERNAME
+app.post("/login", (req, res) => {
+  res.cookie("username", `${req.body.username}`); //save username cookie
+  res.redirect("/urls");
+});
+
+
 //
 //EDIT
 //
 //UPDATE LONG URL
 app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL; //update long url in db
-   res.redirect(`/urls`);
+  res.redirect(`/urls`);
 });
 
 
@@ -73,8 +80,8 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id]; //delete url from db
-  res.redirect("/urls") //redirect to urls page
-})
+  res.redirect("/urls"); //redirect to urls page
+});
 
 
 //
@@ -89,9 +96,9 @@ app.get("/urls/new", (req, res) => {
 //GO TO SPECIFIC URL PAGE
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
-  
+
   if (!urlDatabase[req.params.id]) { //if the short url is not in our data
-    res.status(404).render("urls_error")
+    res.status(404).render("urls_error");
     res.end();
   } else {
     res.render("urls_show", templateVars);
@@ -101,9 +108,9 @@ app.get("/urls/:id", (req, res) => {
 //REDIRECT SHORT URLS to LONG URL
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
-  
+
   if (!urlDatabase[req.params.id]) { //if the url is not in our data
-    res.status(404).render("urls_error")
+    res.status(404).render("urls_error");
     res.end();
   } else {
     res.redirect(longURL);
