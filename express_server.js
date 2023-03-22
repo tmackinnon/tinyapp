@@ -1,17 +1,30 @@
 const express = require("express");
-const PORT = 8080; // default port 8080
-cookieParser = require('cookie-parser')
+cookieParser = require('cookie-parser');
 
 const app = express();
+const PORT = 8080; // default port 8080
+
+//config
+app.set("view engine", "ejs"); //tells Express app that EJS as its default templating engine
+
+//middleware
+app.use(express.urlencoded({ extended: true })); //body parser, to convert to string
 app.use(cookieParser());
 
-app.set("view engine", "ejs"); //tells Express app to use EJS as its templating engine
-app.use(express.urlencoded({ extended: true })); //convert body from buffer to string
 
 //obj to hold urls
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
+};
+
+//obj to hold user info
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "a@a.com",
+    password: "1234",
+  },
 };
 
 //to create short urls
@@ -43,9 +56,10 @@ app.get("/hello", (req, res) => {
 //ALL URLS PAGE
 app.get("/urls", (req, res) => {
   console.log(req.cookies);
-  const templateVars = { 
+  const user_id = req.cookies["user_id"];
+  const templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user: users[user_id]
   };
   res.render("urls_index", templateVars); //looks for urls_index.ejs file and gives it access to templateVars
 });
@@ -64,15 +78,27 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newShortURL}`);
 });
 
-//LOGIN WITH NEW USERNAME
-app.post("/login", (req, res) => {
-  res.cookie("username", `${req.body.username}`); //save username cookie
+//REGISTER
+app.post("/register", (req, res) => {
+  const userID = generateRandonString();
+  res.cookie("user_id", userID); //save user id  as cookie
+  //add user info to user obj
+  users[userID] = {
+    id: userID,
+    email: req.body.email,
+    password: req.body.password
+  };
   res.redirect("/urls");
 });
 
-//LOGOUT - Clear username cookie
+//LOGIN
+app.post("/login", (req, res) => {
+  res.redirect("/urls");
+});
+
+//LOGOUT - Clear user_id
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
@@ -101,18 +127,27 @@ app.post("/urls/:id/delete", (req, res) => {
 // READ
 //
 
+//GO TO REGISTER PAGE
+app.get("/register", (req, res) => {
+  const user_id = req.cookies["user_id"];
+  const templateVars = { user: users[user_id] };
+  res.render("urls_registration", templateVars);
+});
+
 //GO TO ADD NEW URL PAGE
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] }
+  const user_id = req.cookies["user_id"];
+  const templateVars = { user: users[user_id] };
   res.render("urls_new", templateVars);
 });
 
 //GO TO SPECIFIC URL PAGE
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { 
-    id: req.params.id, 
-    longURL: urlDatabase[req.params.id], 
-    username: req.cookies["username"]
+  const user_id = req.cookies["user_id"];
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    user: users[user_id]
   };
 
   if (!urlDatabase[req.params.id]) { //if the short url is not in our data
