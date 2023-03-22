@@ -1,6 +1,9 @@
 const express = require("express");
-const app = express();
 const PORT = 8080; // default port 8080
+cookieParser = require('cookie-parser')
+
+const app = express();
+app.use(cookieParser());
 
 app.set("view engine", "ejs"); //tells Express app to use EJS as its templating engine
 app.use(express.urlencoded({ extended: true })); //convert body from buffer to string
@@ -39,7 +42,11 @@ app.get("/hello", (req, res) => {
 
 //ALL URLS PAGE
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase }; //need to send these in an object
+  console.log(req.cookies);
+  const templateVars = { 
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render("urls_index", templateVars); //looks for urls_index.ejs file and gives it access to templateVars
 });
 
@@ -90,12 +97,17 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //GO TO ADD NEW URL PAGE
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"] }
+  res.render("urls_new", templateVars);
 });
 
 //GO TO SPECIFIC URL PAGE
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = { 
+    id: req.params.id, 
+    longURL: urlDatabase[req.params.id], 
+    username: req.cookies["username"]
+  };
 
   if (!urlDatabase[req.params.id]) { //if the short url is not in our data
     res.status(404).render("urls_error");
