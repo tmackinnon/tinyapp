@@ -21,15 +21,17 @@
     <main style="margin: 1em;">
       <h3>Login</h3>
 
-      <form method="POST" action="/login" class="form-inline">
-        <div class="form-group mb-2">
-          <label for="email">Email Address</label>
-          <input id="email" type="email" name="email"/>
-          
-          <label for="password">Password</label>
-          <input id="password" type="password" name="password">
-
-          <button type="submit" class="btn btn-primary">Submit</button>
+      <form method="POST" action="/login">
+        <div class="form-group mb-3">
+          <label for="email" class="form-label">Email Address</label>
+          <br>
+          <input id="email" type="email" name="email" placeholder="Enter email" style="margin-bottom: 1em;"/>
+          <br>
+          <label for="password" class="form-label">Password</label>
+          <br>
+          <input id="password" type="password" name="password" placeholder="Password" style="margin-bottom: 1em;">
+          <br>
+          <button type="submit" class="btn btn-primary">Login</button>
         </div>
       </form>
 
