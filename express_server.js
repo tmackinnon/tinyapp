@@ -17,7 +17,6 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
-
 //obj to hold user info
 const users = {
   userRandomID: {
@@ -68,7 +67,6 @@ app.get("/hello", (req, res) => {
 
 //ALL URLS PAGE
 app.get("/urls", (req, res) => {
-  console.log(req.cookies);
   const user_id = req.cookies["user_id"];
   const templateVars = {
     urls: urlDatabase,
@@ -96,13 +94,11 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if (email === "" || password === "") {
-    res.status(400).send("Email/Password not inputted");
-    return;
+    return res.status(400).send("Email/Password not inputted");
   }
   //if the email exists in db send 400 code
   if (getUserByEmail(email)) {
-    res.status(400).send("Email already in use.")
-    return;
+    return res.status(400).send("Email already in use.");
   }
   //happy path:
   const userID = generateRandonString();
@@ -118,6 +114,19 @@ app.post("/register", (req, res) => {
 
 //LOGIN
 app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const foundUser = getUserByEmail(email);
+  //check if email is in db if its not send 403 status
+  if (!foundUser) {
+    return res.status(403).send("email not found");
+  }
+  //check if pw in db matches input, if no match send 403
+  if (foundUser.password !== password) {
+    return res.status(403).send("incorrect password");
+  }
+  //if email/pw pass, set cookie to associated user_id and redirect
+  res.cookie("user_id", foundUser.id);
   res.redirect("/urls");
 });
 
