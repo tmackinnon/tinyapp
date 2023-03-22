@@ -27,9 +27,21 @@ const users = {
   },
 };
 
-//to create short urls
+//
+//HELPER FUNCTIONS
+//
+//to create short urls or userIds
 const generateRandonString = function() {
   return Math.random().toString(36).slice(2, 8);
+};
+//to check if user email already exists
+const getUserByEmail = function(email) {
+  for (const user in users) {
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return null;
 };
 
 
@@ -71,7 +83,6 @@ app.get("/urls", (req, res) => {
 
 //ADD NEW URL
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
   const newShortURL = generateRandonString();  //create random ID
   urlDatabase[newShortURL] = req.body.longURL; //store data in urlDatabase object
   //redirect to coressponding url page
@@ -80,14 +91,29 @@ app.post("/urls", (req, res) => {
 
 //REGISTER
 app.post("/register", (req, res) => {
+  //if the email or password field is empty send 400 code
+  const email = req.body.email;
+  const password = req.body.password;
+  if (email === "" || password === "") {
+    res.status(400).send("Email/Password not inputted");
+    return;
+  }
+
+  //if the email exists in db send 400 code
+  if (!getUserByEmail(email)) {
+    res.status(400).send("Email already in use.")
+    return;
+  }
+  
   const userID = generateRandonString();
-  res.cookie("user_id", userID); //save user id  as cookie
   //add user info to user obj
   users[userID] = {
     id: userID,
-    email: req.body.email,
-    password: req.body.password
+    email: email,
+    password: password
   };
+  res.cookie("user_id", userID); //save user id  as cookie
+  console.log(users);
   res.redirect("/urls");
 });
 
