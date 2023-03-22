@@ -36,7 +36,8 @@ const generateRandonString = function() {
 };
 //to check if user email already exists
 const getUserByEmail = function(email) {
-  for (const user in users) {
+  for (const userKey in users) {
+    const user = users[userKey];
     if (user.email === email) {
       return user;
     }
@@ -100,7 +101,7 @@ app.post("/register", (req, res) => {
   }
 
   //if the email exists in db send 400 code
-  if (!getUserByEmail(email)) {
+  if (getUserByEmail(email)) {
     res.status(400).send("Email already in use.")
     return;
   }
@@ -156,8 +157,13 @@ app.post("/urls/:id/delete", (req, res) => {
 //GO TO REGISTER PAGE
 app.get("/register", (req, res) => {
   const user_id = req.cookies["user_id"];
+  console.log("req.cookies", req.cookies)
   const templateVars = { user: users[user_id] };
   res.render("urls_registration", templateVars);
+});
+
+app.get("login", (req, res) => {
+  res.render("urls_login");
 });
 
 //GO TO ADD NEW URL PAGE
