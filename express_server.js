@@ -99,13 +99,12 @@ app.post("/register", (req, res) => {
     res.status(400).send("Email/Password not inputted");
     return;
   }
-
   //if the email exists in db send 400 code
   if (getUserByEmail(email)) {
     res.status(400).send("Email already in use.")
     return;
   }
-  
+  //happy path:
   const userID = generateRandonString();
   //add user info to user obj
   users[userID] = {
@@ -114,7 +113,6 @@ app.post("/register", (req, res) => {
     password: password
   };
   res.cookie("user_id", userID); //save user id  as cookie
-  console.log(users);
   res.redirect("/urls");
 });
 
@@ -157,13 +155,14 @@ app.post("/urls/:id/delete", (req, res) => {
 //GO TO REGISTER PAGE
 app.get("/register", (req, res) => {
   const user_id = req.cookies["user_id"];
-  console.log("req.cookies", req.cookies)
   const templateVars = { user: users[user_id] };
   res.render("urls_registration", templateVars);
 });
 
-app.get("login", (req, res) => {
-  res.render("urls_login");
+app.get("/login", (req, res) => {
+  const user_id = req.cookies["user_id"];
+  const templateVars = { user: users[user_id] };
+  res.render("urls_login", templateVars);
 });
 
 //GO TO ADD NEW URL PAGE
