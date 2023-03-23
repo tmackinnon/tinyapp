@@ -1,5 +1,6 @@
 const express = require("express");
-cookieParser = require('cookie-parser');
+const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 
 const app = express();
 const PORT = 8080; // default port 8080
@@ -12,7 +13,7 @@ app.use(express.urlencoded({ extended: true })); //body parser, to convert to st
 app.use(cookieParser());
 
 
-//obj to hold urls
+//obj to hold urls -- existing urls to be used for tests
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
@@ -23,12 +24,12 @@ const urlDatabase = {
     userID: "aJ48lW"
   }
 };
-//obj to hold user info
+//obj to hold user info -- user aJ48lW to be used for tests
 const users = {
   aJ48lW: {
     id: "aJ48lW",
     email: "a@a.com",
-    password: "1234",
+    password: "$2a$10$Gyp9PyqSE//lxvokM69LkuPys.3jE9ngqD6LM18BeQHQMwBG.H9LG", //use 1234 in browser
   },
 };
 
@@ -121,21 +122,23 @@ app.post("/register", (req, res) => {
   //if the email or password field is empty send 400 code
   const email = req.body.email;
   const password = req.body.password;
-  if (email === "" || password === "") {
-    return res.status(400).send("Email/Password not inputted");
+  if (!email || !password) {
+    return res.status(400).send("Email or Password not inputted");
   }
   //if the email exists in db send 400 code
   if (getUserByEmail(email)) {
     return res.status(400).send("Email already in use.");
   }
-  //happy path:
+  //happy path - hash pw and create userID
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const userID = generateRandonString();
   //add user info to user obj
   users[userID] = {
     id: userID,
     email: email,
-    password: password
+    password: hashedPassword
   };
+  console.log(users);
   res.cookie("user_id", userID); //save user id  as cookie
   res.redirect("/urls");
 });
@@ -150,7 +153,7 @@ app.post("/login", (req, res) => {
     return res.status(403).send("email not found");
   }
   //check if pw in db matches input, if no match send 403
-  if (foundUser.password !== password) {
+  if (!bcrypt.compareSync(password, foundUser.password)) {
     return res.status(403).send("incorrect password");
   }
   //if email/pw pass, set cookie to associated user_id and redirect
