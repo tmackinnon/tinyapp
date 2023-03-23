@@ -191,8 +191,7 @@ app.get("/urls/:id", (req, res) => {
   };
 
   if (!urlDatabase[req.params.id]) { //if the short url is not in our data
-    res.status(404).render("urls_error");
-    res.end();
+    return res.status(404).send("Error: This url does not exist")
   } else {
     res.render("urls_show", templateVars);
   }
@@ -202,9 +201,8 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
 
-  if (!urlDatabase[req.params.id]) { //if the url is not in our data
-    res.status(404).render("urls_error");
-    res.end();
+  if (!longURL) { //if the url is not in our data
+    return res.status(404).send("URL is invalid");
   } else {
     res.redirect(longURL);
   }
