@@ -80,8 +80,12 @@ app.get("/urls", (req, res) => {
 // ADD 
 //
 
-//ADD NEW URL
+//USER ADDS NEW URL
 app.post("/urls", (req, res) => {
+  const user_id = req.cookies.user_id;
+  if (!user_id) {
+    return res.send("Error: You must register/login to create TinyURL")
+  }
   const newShortURL = generateRandonString();  //create random ID
   urlDatabase[newShortURL] = req.body.longURL; //store data in urlDatabase object
   //redirect to coressponding url page
@@ -182,7 +186,10 @@ app.get("/login", (req, res) => {
 
 //GO TO ADD NEW URL PAGE
 app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies["user_id"];
+  const user_id = req.cookies.user_id;
+  if (!user_id) {
+    return res.redirect("/login");
+  }
   const templateVars = { user: users[user_id] };
   res.render("urls_new", templateVars);
 });
@@ -197,7 +204,7 @@ app.get("/urls/:id", (req, res) => {
   };
 
   if (!urlDatabase[req.params.id]) { //if the short url is not in our data
-    return res.status(404).send("Error: This url does not exist")
+    return res.status(404).send("Error: This url does not exist");
   } else {
     res.render("urls_show", templateVars);
   }
