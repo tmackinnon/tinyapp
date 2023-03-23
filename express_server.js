@@ -49,7 +49,16 @@ const getUserByEmail = function(email) {
   }
   return null;
 };
-
+//returns URLs where the userID is equal to the id of the currently logged-in user
+const urlsForUser = function(id) {
+  let urls = {};
+  for (const key in urlDatabase) {
+    if (urlDatabase[key].userID === id) {
+      urls[key] = urlDatabase[key];
+    }
+  }
+  return urls;
+}
 
 //
 //BROWSE
@@ -74,8 +83,12 @@ app.get("/hello", (req, res) => {
 //ALL URLS PAGE
 app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id;
+  //if not logged in
+  if (!user_id) {
+    return res.status(401).send("Error: Cannot access if not logged in")
+  }
   const templateVars = {
-    urls: urlDatabase,
+    urls: urlsForUser(user_id),
     user: users[user_id]
   };
   res.render("urls_index", templateVars); //looks for urls_index.ejs file and gives it access to templateVars
@@ -212,10 +225,21 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const user_id = req.cookies.user_id;
   const id = req.params.id;
-  
+
   if (!urlDatabase[id]) { //if the short url is not in our data
     return res.status(404).send(`Page not found: Invalid URL`);
   } 
+
+  //must be logged in to see page
+  if (!user_id) {
+    return res.status(401).send('Page not accessible. Login to view')
+  }
+  
+  //if there's no associated urls with user_id
+  if (urlDatabase[id].userID !== user_id) {
+    return res.status(401).send('Page only accessible to URL owner')
+  }
+  
   const templateVars = {
     id: id,
     longURL: urlDatabase[id].longURL,
