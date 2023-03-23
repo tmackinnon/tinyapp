@@ -165,7 +165,7 @@ app.post("/urls/:id/delete", (req, res) => {
 // READ
 //
 
-//GO TO REGISTER PAGE
+//SEE REGISTER PAGE
 app.get("/register", (req, res) => {
   const user_id = req.cookies.user_id;
   if (user_id) {
@@ -184,7 +184,7 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars);
 });
 
-//GO TO ADD NEW URL PAGE
+//SEE ADD NEW URL PAGE
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
@@ -194,9 +194,9 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-//GO TO SPECIFIC URL PAGE
+//SEE SPECIFIC URL PAGE
 app.get("/urls/:id", (req, res) => {
-  const user_id = req.cookies["user_id"];
+  const user_id = req.cookies.user_id;
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
@@ -204,7 +204,7 @@ app.get("/urls/:id", (req, res) => {
   };
 
   if (!urlDatabase[req.params.id]) { //if the short url is not in our data
-    return res.status(404).send("Error: This url does not exist");
+    return res.status(404).send(`Page not found: Invalid URL`);
   } else {
     res.render("urls_show", templateVars);
   }
@@ -212,13 +212,12 @@ app.get("/urls/:id", (req, res) => {
 
 //REDIRECT SHORT URLS to LONG URL
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-
-  if (!longURL) { //if the url is not in our data
-    return res.status(404).send("URL is invalid");
-  } else {
-    res.redirect(longURL);
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  if (!urlDatabase[id]) {
+    return res.status(404).send("Page not found: Invalid URL");
   }
+  res.redirect(longURL);
 });
 
 
