@@ -14,13 +14,19 @@ app.use(cookieParser());
 
 //obj to hold urls
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+     longURL: "http://www.lighthouselabs.ca", 
+     userID: "aJ48lW"
+    },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "aJ48lW"
+  }
 };
 //obj to hold user info
 const users = {
-  userRandomID: {
-    id: "userRandomID",
+  aJ48lW: {
+    id: "aJ48lW",
     email: "a@a.com",
     password: "1234",
   },
@@ -67,7 +73,7 @@ app.get("/hello", (req, res) => {
 
 //ALL URLS PAGE
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies["user_id"];
+  const user_id = req.cookies.user_id;
   const templateVars = {
     urls: urlDatabase,
     user: users[user_id]
@@ -82,14 +88,19 @@ app.get("/urls", (req, res) => {
 
 //USER ADDS NEW URL
 app.post("/urls", (req, res) => {
+  //check if logged in 
   const user_id = req.cookies.user_id;
   if (!user_id) {
     return res.send("Error: You must register/login to create TinyURL")
   }
-  const newShortURL = generateRandonString();  //create random ID
-  urlDatabase[newShortURL] = req.body.longURL; //store data in urlDatabase object
+  const id = generateRandonString();  //create random ID
+  //store data in urlDatabase object
+  urlDatabase[id] = {
+    longURL: req.body.longURL,
+    userID: user_id
+  }; 
   //redirect to coressponding url page
-  res.redirect(`/urls/${newShortURL}`);
+  res.redirect(`/urls/${id}`);
 });
 
 //REGISTER
@@ -144,9 +155,11 @@ app.post("/logout", (req, res) => {
 //
 //EDIT
 //
+
 //UPDATE LONG URL
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL; //update long url in db
+  const id = req.params.id;
+  urlDatabase[id].longURL = req.body.longURL; //update long url in db
   res.redirect(`/urls`);
 });
 
@@ -156,7 +169,8 @@ app.post("/urls/:id", (req, res) => {
 //
 
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id]; //delete url from db
+  const id = req.params.id;
+  delete urlDatabase[id]; //delete url from db
   res.redirect("/urls"); //redirect to urls page
 });
 
@@ -197,27 +211,27 @@ app.get("/urls/new", (req, res) => {
 //SEE SPECIFIC URL PAGE
 app.get("/urls/:id", (req, res) => {
   const user_id = req.cookies.user_id;
+  const id = req.params.id;
+  
+  if (!urlDatabase[id]) { //if the short url is not in our data
+    return res.status(404).send(`Page not found: Invalid URL`);
+  } 
   const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    id: id,
+    longURL: urlDatabase[id].longURL,
     user: users[user_id]
   };
-
-  if (!urlDatabase[req.params.id]) { //if the short url is not in our data
-    return res.status(404).send(`Page not found: Invalid URL`);
-  } else {
-    res.render("urls_show", templateVars);
-  }
+  res.render("urls_show", templateVars);
 });
 
 //REDIRECT SHORT URLS to LONG URL
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id];
+  //check if url in our db
   if (!urlDatabase[id]) {
     return res.status(404).send("Page not found: Invalid URL");
   }
-  res.redirect(longURL);
+  res.redirect(urlDatabase[id].longURL);
 });
 
 
