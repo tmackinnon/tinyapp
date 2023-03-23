@@ -15,9 +15,9 @@ app.use(cookieParser());
 //obj to hold urls
 const urlDatabase = {
   "b2xVn2": {
-     longURL: "http://www.lighthouselabs.ca", 
-     userID: "aJ48lW"
-    },
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "aJ48lW"
+  },
   "9sm5xK": {
     longURL: "http://www.google.com",
     userID: "aJ48lW"
@@ -58,7 +58,7 @@ const urlsForUser = function(id) {
     }
   }
   return urls;
-}
+};
 
 //
 //BROWSE
@@ -85,7 +85,7 @@ app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id;
   //if not logged in
   if (!user_id) {
-    return res.status(401).send("Error: Cannot access if not logged in")
+    return res.status(401).send("Error: Cannot access if not logged in");
   }
   const templateVars = {
     urls: urlsForUser(user_id),
@@ -104,14 +104,14 @@ app.post("/urls", (req, res) => {
   //check if logged in 
   const user_id = req.cookies.user_id;
   if (!user_id) {
-    return res.send("Error: You must register/login to create TinyURL")
+    return res.send("Error: You must register/login to create TinyURL");
   }
   const id = generateRandonString();  //create random ID
   //store data in urlDatabase object
   urlDatabase[id] = {
     longURL: req.body.longURL,
     userID: user_id
-  }; 
+  };
   //redirect to coressponding url page
   res.redirect(`/urls/${id}`);
 });
@@ -172,8 +172,22 @@ app.post("/logout", (req, res) => {
 //UPDATE LONG URL
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
+  const user_id = req.cookies.user_id;
+  //check if id is in db
+  if (!urlDatabase[id]) {
+    return res.status(404).send(`${id} cannot be found, use a valid URL`);
+  }
+  //check if user is logged in
+  if (!user_id) {
+    return res.status(401).send("Page not accessible. User must be logged in to update");
+  }
+  //check if the user owns the url
+  if (urlDatabase[id].userID !== user_id) {
+    return res.status(401).send("URL can only be updated by URL owner");
+  }
+
   urlDatabase[id].longURL = req.body.longURL; //update long url in db
-  res.redirect(`/urls`);
+  res.redirect("/urls");
 });
 
 
@@ -227,19 +241,19 @@ app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
 
   if (!urlDatabase[id]) { //if the short url is not in our data
-    return res.status(404).send(`Page not found: Invalid URL`);
-  } 
+    return res.status(404).send("Page not found: Invalid URL");
+  }
 
   //must be logged in to see page
   if (!user_id) {
-    return res.status(401).send('Page not accessible. Login to view')
+    return res.status(401).send("Page not accessible. User must be logged in");
   }
-  
+
   //if there's no associated urls with user_id
   if (urlDatabase[id].userID !== user_id) {
-    return res.status(401).send('Page only accessible to URL owner')
+    return res.status(401).send("Page only accessible to URL owner");
   }
-  
+
   const templateVars = {
     id: id,
     longURL: urlDatabase[id].longURL,
