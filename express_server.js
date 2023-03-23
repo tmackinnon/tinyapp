@@ -88,10 +88,10 @@ app.get("/urls", (req, res) => {
     return res.status(401).send("Error: Cannot access if not logged in");
   }
   const templateVars = {
-    urls: urlsForUser(user_id),
+    urls: urlsForUser(user_id), //so only viewing the users URLs
     user: users[user_id]
   };
-  res.render("urls_index", templateVars); //looks for urls_index.ejs file and gives it access to templateVars
+  res.render("urls_index", templateVars);
 });
 
 
@@ -169,13 +169,13 @@ app.post("/logout", (req, res) => {
 //EDIT
 //
 
-//UPDATE LONG URL
+//UPDATE - EDIT LONG URL
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   const user_id = req.cookies.user_id;
   //check if id is in db
   if (!urlDatabase[id]) {
-    return res.status(404).send(`Cannot updated. ID: ${id} does not exist`);
+    return res.status(404).send(`Cannot update. ID: ${id} does not exist`);
   }
   //check if user is logged in
   if (!user_id) {
@@ -230,6 +230,7 @@ app.get("/register", (req, res) => {
   res.render("urls_registration", templateVars);
 });
 
+//SEE LOGIN PAGE
 app.get("/login", (req, res) => {
   const user_id = req.cookies.user_id;
   if (user_id) {
