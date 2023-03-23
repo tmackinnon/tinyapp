@@ -175,7 +175,7 @@ app.post("/urls/:id", (req, res) => {
   const user_id = req.cookies.user_id;
   //check if id is in db
   if (!urlDatabase[id]) {
-    return res.status(404).send(`${id} cannot be found, use a valid URL`);
+    return res.status(404).send(`Cannot updated. ID: ${id} does not exist`);
   }
   //check if user is logged in
   if (!user_id) {
@@ -183,7 +183,7 @@ app.post("/urls/:id", (req, res) => {
   }
   //check if the user owns the url
   if (urlDatabase[id].userID !== user_id) {
-    return res.status(401).send("URL can only be updated by URL owner");
+    return res.status(401).send("Error, only URL owner can make changes");
   }
 
   urlDatabase[id].longURL = req.body.longURL; //update long url in db
@@ -197,6 +197,20 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
+  const user_id = req.cookies.user_id;
+    //check if id is in db
+    if (!urlDatabase[id]) {
+      return res.status(404).send(`Cannot remove ID: ${id}, the URL was not found`);
+    }
+    //check if user is logged in
+    if (!user_id) {
+      return res.status(401).send("Page not accessible. User must be logged in to make changes");
+    }
+    //check if the user owns the url
+    if (urlDatabase[id].userID !== user_id) {
+      return res.status(401).send("Error, only URL owner can remove this URL");
+    }
+  
   delete urlDatabase[id]; //delete url from db
   res.redirect("/urls"); //redirect to urls page
 });
