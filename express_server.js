@@ -1,12 +1,12 @@
 const express = require("express");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
-const { getUserByEmail } = require("./helpers")
+const { getUserByEmail } = require("./helpers");
 
 const app = express();
 const PORT = 8080; // default port 8080
 
-//config
+
 app.set("view engine", "ejs"); //tells Express app that EJS as its default templating engine
 
 //middleware
@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true })); //body parser, to convert to st
 app.use(cookieSession({
   name: "user-cookie",
   keys: ['silversprings'],
-}))
+}));
 
 
 //obj to hold urls -- existing urls to be used for tests
@@ -44,7 +44,6 @@ const users = {
 const generateRandonString = function() {
   return Math.random().toString(36).slice(2, 8);
 };
-
 //returns URLs where the userID is equal to the id of the currently logged-in user
 const urlsForUser = function(id) {
   let urls = {};
@@ -55,6 +54,7 @@ const urlsForUser = function(id) {
   }
   return urls;
 };
+
 
 //
 //BROWSE
@@ -133,7 +133,7 @@ app.post("/register", (req, res) => {
     email: email,
     password: hashedPassword
   };
-  req.session.user_id = userID //save user id 
+  req.session.user_id = userID; //save user id 
   res.redirect("/urls");
 });
 
@@ -151,7 +151,7 @@ app.post("/login", (req, res) => {
     return res.status(403).send("incorrect password");
   }
   //if email/pw pass, set cookie to associated user_id and redirect
-  req.session.user_id = foundUser.id
+  req.session.user_id = foundUser.id;
   res.redirect("/urls");
 });
 
@@ -195,19 +195,19 @@ app.post("/urls/:id", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   const user_id = req.session.user_id;
-    //check if id is in db
-    if (!urlDatabase[id]) {
-      return res.status(404).send(`Cannot remove ID: ${id}, the URL was not found`);
-    }
-    //check if user is logged in
-    if (!user_id) {
-      return res.status(401).send("Page not accessible. User must be logged in to make changes");
-    }
-    //check if the user owns the url
-    if (urlDatabase[id].userID !== user_id) {
-      return res.status(401).send("Error, only URL owner can remove this URL");
-    }
-  
+  //check if id is in db
+  if (!urlDatabase[id]) {
+    return res.status(404).send(`Cannot remove ID: ${id}, the URL was not found`);
+  }
+  //check if user is logged in
+  if (!user_id) {
+    return res.status(401).send("Page not accessible. User must be logged in to make changes");
+  }
+  //check if the user owns the url
+  if (urlDatabase[id].userID !== user_id) {
+    return res.status(401).send("Error, only URL owner can remove this URL");
+  }
+
   delete urlDatabase[id]; //delete url from db
   res.redirect("/urls"); //redirect to urls page
 });
