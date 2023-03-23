@@ -163,13 +163,19 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //GO TO REGISTER PAGE
 app.get("/register", (req, res) => {
-  const user_id = req.cookies["user_id"];
+  const user_id = req.cookies.user_id;
+  if (user_id) {
+    return res.redirect("/urls");
+  }
   const templateVars = { user: users[user_id] };
   res.render("urls_registration", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  const user_id = req.cookies["user_id"];
+  const user_id = req.cookies.user_id;
+  if (user_id) {
+    return res.redirect("/urls");
+  }
   const templateVars = { user: users[user_id] };
   res.render("urls_login", templateVars);
 });
