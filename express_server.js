@@ -1,5 +1,5 @@
 const express = require("express");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 
 const app = express();
@@ -10,7 +10,10 @@ app.set("view engine", "ejs"); //tells Express app that EJS as its default templ
 
 //middleware
 app.use(express.urlencoded({ extended: true })); //body parser, to convert to string
-app.use(cookieParser());
+app.use(cookieSession({
+  name: "user-cookie",
+  keys: ['silversprings'],
+}))
 
 
 //obj to hold urls -- existing urls to be used for tests
@@ -83,8 +86,8 @@ app.get("/hello", (req, res) => {
 
 //ALL URLS PAGE
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies.user_id;
-  //if not logged in
+  const user_id = req.session.user_id;
+  //if not logged in (no cookie)
   if (!user_id) {
     return res.status(401).send("Error: Cannot access if not logged in");
   }
@@ -103,7 +106,7 @@ app.get("/urls", (req, res) => {
 //USER ADDS NEW URL
 app.post("/urls", (req, res) => {
   //check if logged in 
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   if (!user_id) {
     return res.send("Error: You must register/login to create TinyURL");
   }
@@ -138,8 +141,7 @@ app.post("/register", (req, res) => {
     email: email,
     password: hashedPassword
   };
-  console.log(users);
-  res.cookie("user_id", userID); //save user id  as cookie
+  req.session.user_id = userID //save user id 
   res.redirect("/urls");
 });
 
@@ -157,13 +159,13 @@ app.post("/login", (req, res) => {
     return res.status(403).send("incorrect password");
   }
   //if email/pw pass, set cookie to associated user_id and redirect
-  res.cookie("user_id", foundUser.id);
+  req.session.user_id = foundUser.id
   res.redirect("/urls");
 });
 
 //LOGOUT - Clear user_id
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
 
@@ -175,7 +177,7 @@ app.post("/logout", (req, res) => {
 //UPDATE - EDIT LONG URL
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   //check if id is in db
   if (!urlDatabase[id]) {
     return res.status(404).send(`Cannot update. ID: ${id} does not exist`);
@@ -200,7 +202,7 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
     //check if id is in db
     if (!urlDatabase[id]) {
       return res.status(404).send(`Cannot remove ID: ${id}, the URL was not found`);
@@ -225,7 +227,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //SEE REGISTER PAGE
 app.get("/register", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   if (user_id) {
     return res.redirect("/urls");
   }
@@ -235,7 +237,7 @@ app.get("/register", (req, res) => {
 
 //SEE LOGIN PAGE
 app.get("/login", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   if (user_id) {
     return res.redirect("/urls");
   }
@@ -245,7 +247,7 @@ app.get("/login", (req, res) => {
 
 //SEE ADD NEW URL PAGE
 app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   if (!user_id) {
     return res.redirect("/login");
   }
@@ -253,9 +255,9 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-//SEE SPECIFIC URL PAGE
+//SEE SPECIFIC URL PAGE - restricted to owner of URL
 app.get("/urls/:id", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const id = req.params.id;
 
   if (!urlDatabase[id]) { //if the short url is not in our data
