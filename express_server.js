@@ -1,6 +1,7 @@
 const express = require("express");
-const cookieSession = require('cookie-session');
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
+const { getUserByEmail } = require("./helpers")
 
 const app = express();
 const PORT = 8080; // default port 8080
@@ -43,16 +44,7 @@ const users = {
 const generateRandonString = function() {
   return Math.random().toString(36).slice(2, 8);
 };
-//to check if user email already exists
-const getUserByEmail = function(email) {
-  for (const userKey in users) {
-    const user = users[userKey];
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return null;
-};
+
 //returns URLs where the userID is equal to the id of the currently logged-in user
 const urlsForUser = function(id) {
   let urls = {};
@@ -129,7 +121,7 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Email or Password not inputted");
   }
   //if the email exists in db send 400 code
-  if (getUserByEmail(email)) {
+  if (getUserByEmail(email, users)) {
     return res.status(400).send("Email already in use.");
   }
   //happy path - hash pw and create userID
@@ -149,7 +141,7 @@ app.post("/register", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const foundUser = getUserByEmail(email);
+  const foundUser = getUserByEmail(email, users);
   //check if email is in db if its not send 403 status
   if (!foundUser) {
     return res.status(403).send("email not found");
