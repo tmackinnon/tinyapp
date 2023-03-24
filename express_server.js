@@ -6,10 +6,9 @@ const { getUserByEmail } = require("./helpers");
 const app = express();
 const PORT = 8080; // default port 8080
 
-
 app.set("view engine", "ejs"); //tells Express app that EJS as its default templating engine
 
-//middleware
+//MIDDLEWARE
 app.use(express.urlencoded({ extended: true })); //body parser, to convert to string
 app.use(cookieSession({
   name: "user-cookie",
@@ -38,7 +37,7 @@ const users = {
 };
 
 //
-//HELPER FUNCTIONS
+//HELPER FUNCTIONS --- ADD THESE TO /helpers.js
 //
 //to create short urls or userIds
 const generateRandonString = function() {
@@ -55,46 +54,26 @@ const urlsForUser = function(id) {
   return urls;
 };
 
-
 //
 //BROWSE
 //
 
-//HOMEPAGE
+// HOMEPAGE - redirected to /urls //
 app.get("/", (req, res) => {
-  console.log("url Database:", urlDatabase); //for debugging purposes
-  res.send("Hello!");
-});
-
-// Don't know the purpose of this
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-//
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
-//ALL URLS PAGE
-app.get("/urls", (req, res) => {
+  //check if logged in 
   const user_id = req.session.user_id;
-  //if not logged in (no cookie)
   if (!user_id) {
-    return res.status(401).send("Error: Cannot access if not logged in");
+    res.redirect("/login");
   }
-  const templateVars = {
-    urls: urlsForUser(user_id), //so only viewing the users URLs
-    user: users[user_id]
-  };
-  res.render("urls_index", templateVars);
+  res.redirect("/urls");
 });
 
 
 //
-// ADD 
+//CRUD URLS
 //
 
+// CREATE - POST //
 //USER ADDS NEW URL
 app.post("/urls", (req, res) => {
   //check if logged in 
@@ -111,6 +90,72 @@ app.post("/urls", (req, res) => {
   //redirect to coressponding url page
   res.redirect(`/urls/${id}`);
 });
+
+// READ ALL - GET //
+// RAW DATA
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
+});
+
+// READ ONE - GET //
+//REDIRECT SHORT URLS TO LONG URL
+app.get("/u/:id", (req, res) => {
+  const id = req.params.id;
+  //check if url in our db
+  if (!urlDatabase[id]) {
+    return res.status(404).send("<h2>Page not found: Invalid URL</h2>");
+  }
+  res.redirect(urlDatabase[id].longURL);
+});
+
+// UPDATE - POST/PUT //
+//EDIT LONG URL
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const user_id = req.session.user_id;
+  //check if id is in db
+  if (!urlDatabase[id]) {
+    return res.status(404).send("<h2>Cannot update.This short URL does not exist</h2>");
+  }
+  //check if user is logged in
+  if (!user_id) {
+    return res.status(401).send("<h2>Page not accessible. User must be logged in to update</h2>");
+  }
+  //check if the user owns the url
+  if (urlDatabase[id].userID !== user_id) {
+    return res.status(401).send("<h2>Error, only URL owner can make changes</h2>");
+  }
+
+  urlDatabase[id].longURL = req.body.longURL; //update long url in db
+  res.redirect("/urls");
+});
+
+//DELETE - POST/DELETE //
+//REMOVE URL FROM DB
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id;
+  const user_id = req.session.user_id;
+  //check if id is in db
+  if (!urlDatabase[id]) {
+    return res.status(404).send("<h2>Cannot remove. The requested URL was not found</h2>");
+  }
+  //check if user is logged in
+  if (!user_id) {
+    return res.status(401).send("<h2>Page not accessible. User must be logged in to make changes</h2>");
+  }
+  //check if the user owns the url
+  if (urlDatabase[id].userID !== user_id) {
+    return res.status(401).send("<h2>Error, only URL owner can remove this URL</h2>");
+  }
+
+  delete urlDatabase[id]; //delete url from db
+  res.redirect("/urls"); //redirect to urls page
+});
+
+
+//
+// AUTH API
+//
 
 //REGISTER
 app.post("/register", (req, res) => {
@@ -162,82 +207,27 @@ app.post("/logout", (req, res) => {
 });
 
 
-//
-//EDIT
-//
+//                                     
+// RENDERING/INDEX ROUTES - rendering
+//                                   
 
-//UPDATE - EDIT LONG URL
-app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
+// URLS FRONT END (all/new/show) //
+
+//ALL URLS PAGE
+app.get("/urls", (req, res) => {
   const user_id = req.session.user_id;
-  //check if id is in db
-  if (!urlDatabase[id]) {
-    return res.status(404).send(`Cannot update. ID: ${id} does not exist`);
-  }
-  //check if user is logged in
+  //if not logged in (no cookie)
   if (!user_id) {
-    return res.status(401).send("Page not accessible. User must be logged in to update");
+    return res.status(401).send("<h2>Cannot access page if not logged in</h2><h3>Please login to view</h3>");
   }
-  //check if the user owns the url
-  if (urlDatabase[id].userID !== user_id) {
-    return res.status(401).send("Error, only URL owner can make changes");
-  }
-
-  urlDatabase[id].longURL = req.body.longURL; //update long url in db
-  res.redirect("/urls");
+  const templateVars = {
+    urls: urlsForUser(user_id), //so only viewing the users URLs
+    user: users[user_id]
+  };
+  res.render("urls_index", templateVars);
 });
 
-
-//
-// DELETE
-//
-
-app.post("/urls/:id/delete", (req, res) => {
-  const id = req.params.id;
-  const user_id = req.session.user_id;
-  //check if id is in db
-  if (!urlDatabase[id]) {
-    return res.status(404).send(`Cannot remove ID: ${id}, the URL was not found`);
-  }
-  //check if user is logged in
-  if (!user_id) {
-    return res.status(401).send("Page not accessible. User must be logged in to make changes");
-  }
-  //check if the user owns the url
-  if (urlDatabase[id].userID !== user_id) {
-    return res.status(401).send("Error, only URL owner can remove this URL");
-  }
-
-  delete urlDatabase[id]; //delete url from db
-  res.redirect("/urls"); //redirect to urls page
-});
-
-
-//
-// READ
-//
-
-//SEE REGISTER PAGE
-app.get("/register", (req, res) => {
-  const user_id = req.session.user_id;
-  if (user_id) {
-    return res.redirect("/urls");
-  }
-  const templateVars = { user: users[user_id] };
-  res.render("urls_registration", templateVars);
-});
-
-//SEE LOGIN PAGE
-app.get("/login", (req, res) => {
-  const user_id = req.session.user_id;
-  if (user_id) {
-    return res.redirect("/urls");
-  }
-  const templateVars = { user: users[user_id] };
-  res.render("urls_login", templateVars);
-});
-
-//SEE ADD NEW URL PAGE
+//ADD NEW URL
 app.get("/urls/new", (req, res) => {
   const user_id = req.session.user_id;
   if (!user_id) {
@@ -247,23 +237,23 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-//SEE SPECIFIC URL PAGE - restricted to owner of URL
+//SHOW SPECIFIC URL PAGE - restricted to owner of URL
 app.get("/urls/:id", (req, res) => {
   const user_id = req.session.user_id;
   const id = req.params.id;
 
   if (!urlDatabase[id]) { //if the short url is not in our data
-    return res.status(404).send("Page not found: Invalid URL");
+    return res.status(404).send("<h2>Page not found: Invalid URL</h2>");
   }
 
   //must be logged in to see page
   if (!user_id) {
-    return res.status(401).send("Page not accessible. User must be logged in");
+    return res.status(401).send("<h2>Page not accessible. User must be logged in</h2>");
   }
 
   //if there's no associated urls with user_id
   if (urlDatabase[id].userID !== user_id) {
-    return res.status(401).send("Page only accessible to URL owner");
+    return res.status(401).send("<h2>Page only accessible to URL owner</h2>");
   }
 
   const templateVars = {
@@ -274,17 +264,34 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-//REDIRECT SHORT URLS to LONG URL
-app.get("/u/:id", (req, res) => {
-  const id = req.params.id;
-  //check if url in our db
-  if (!urlDatabase[id]) {
-    return res.status(404).send("Page not found: Invalid URL");
+// AUTH FRONT END //
+
+//SEE REGISTER PAGE
+//
+app.get("/register", (req, res) => {
+  const user_id = req.session.user_id;
+  if (user_id) {
+    return res.redirect("/urls");
   }
-  res.redirect(urlDatabase[id].longURL);
+  const templateVars = { user: users[user_id] };
+  res.render("urls_registration", templateVars);
 });
 
+//SEE LOGIN PAGE
+//
+app.get("/login", (req, res) => {
+  const user_id = req.session.user_id;
+  if (user_id) {
+    return res.redirect("/urls");
+  }
+  const templateVars = { user: users[user_id] };
+  res.render("urls_login", templateVars);
+});
 
+//CATCH ALL 
+app.use((req, res) => {
+  res.status(404).send("<h1>Page not found</h1>");
+});
 
 //app listen on port
 app.listen(PORT, () => {
