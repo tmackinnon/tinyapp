@@ -13,5 +13,10 @@ const getUserByEmail = function(email, database) {
   return null;
 };
 
+//to create short urls or userIds
+const generateRandomString = function() {
+  return Math.random().toString(36).slice(2, 8);
+};
 
-module.exports = { getUserByEmail }
+
+module.exports = { getUserByEmail, generateRandomString }
