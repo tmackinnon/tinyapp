@@ -1,7 +1,7 @@
 const express = require("express");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
-const { getUserByEmail } = require("./helpers");
+const { getUserByEmail, generateRandomString } = require("./helpers");
 
 const app = express();
 const PORT = 8080; // default port 8080
@@ -36,14 +36,8 @@ const users = {
   },
 };
 
-//
-//HELPER FUNCTIONS --- ADD THESE TO /helpers.js
-//
-//to create short urls or userIds
-const generateRandonString = function() {
-  return Math.random().toString(36).slice(2, 8);
-};
-//returns URLs where the userID is equal to the id of the currently logged-in user
+//HELPER FUNCTION
+//returns urls where the userID is equal to the id of the currently logged-in user
 const urlsForUser = function(id) {
   let urls = {};
   for (const key in urlDatabase) {
@@ -81,7 +75,7 @@ app.post("/urls", (req, res) => {
   if (!user_id) {
     return res.send("Error: You must register/login to create TinyURL");
   }
-  const id = generateRandonString();  //create random ID
+  const id = generateRandomString();  //create random ID
   //store data in urlDatabase object
   urlDatabase[id] = {
     longURL: req.body.longURL,
@@ -163,15 +157,15 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if (!email || !password) {
-    return res.status(400).send("Email or Password not inputted");
+    return res.status(400).send("<h2>Email or Password not inputted</h2>");
   }
   //if the email exists in db send 400 code
   if (getUserByEmail(email, users)) {
-    return res.status(400).send("Email already in use.");
+    return res.status(400).send("<h2>Email already in use.</h2>");
   }
   //happy path - hash pw and create userID
   const hashedPassword = bcrypt.hashSync(password, 10);
-  const userID = generateRandonString();
+  const userID = generateRandomString();
   //add user info to user obj
   users[userID] = {
     id: userID,
@@ -189,11 +183,11 @@ app.post("/login", (req, res) => {
   const foundUser = getUserByEmail(email, users);
   //check if email is in db if its not send 403 status
   if (!foundUser) {
-    return res.status(403).send("email not found");
+    return res.status(403).send("<h2>email not found</h2>");
   }
   //check if pw in db matches input, if no match send 403
   if (!bcrypt.compareSync(password, foundUser.password)) {
-    return res.status(403).send("incorrect password");
+    return res.status(403).send("<h2>incorrect password</h2>");
   }
   //if email/pw pass, set cookie to associated user_id and redirect
   req.session.user_id = foundUser.id;
@@ -218,7 +212,7 @@ app.get("/urls", (req, res) => {
   const user_id = req.session.user_id;
   //if not logged in (no cookie)
   if (!user_id) {
-    return res.status(401).send("<h2>Cannot access page if not logged in</h2><h3>Please login to view</h3>");
+    return res.status(401).send("<h2>Cannot access page if not logged in</h2><h3>Please <a href=/login> login to view</h3>");
   }
   const templateVars = {
     urls: urlsForUser(user_id), //so only viewing the users URLs
